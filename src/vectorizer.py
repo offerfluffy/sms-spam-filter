@@ -6,18 +6,21 @@ import scipy.sparse
 class TextVectorizer:
     """Class for vectorizing text data using TF-IDF."""
 
-    def __init__(self, max_features: int = 3000):
+    # Update __init__ to accept min_df and max_df
+    def __init__(self, max_features: int = 3000, min_df=5, max_df=0.7):
         """
         Initialize vectorizer.
 
         Args:
-            max_features: Maximum number of words to keep (vocabulary size)
+            max_features: Maximum number of words to keep
+            min_df: Minimum document frequency (int for count, float for ratio)
+            max_df: Maximum document frequency (float for ratio)
         """
         self.tfidf = TfidfVectorizer(
             max_features=max_features,
-            min_df=5,  # Ignore words that appear in fewer than 5 docs
-            max_df=0.7,  # Ignore words that appear in > 70% of docs
-            ngram_range=(1, 2)  # Use single words and pairs of words (bi-grams)
+            min_df=min_df,  # <--- Use the variable
+            max_df=max_df,  # <--- Use the variable
+            ngram_range=(1, 2)
         )
 
     def fit_transform(self, X_train_text: pd.Series) -> scipy.sparse.csr_matrix:
