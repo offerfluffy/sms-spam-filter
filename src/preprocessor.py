@@ -2,20 +2,16 @@ import pandas as pd
 import re
 import string
 import nltk
-import ssl  # <--- Add this import
+import ssl
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 
-# --- ADD THIS BLOCK TO FIX SSL ERROR ON MAC ---
 try:
     _create_unverified_https_context = ssl._create_unverified_context
 except AttributeError:
     pass
 else:
     ssl._create_default_https_context = _create_unverified_https_context
-
-
-# ----------------------------------------------
 
 class TextPreprocessor:
     """Class for cleaning and preprocessing text data."""
