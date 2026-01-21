@@ -2,7 +2,8 @@ from src.data_loader import DataLoader
 from src.preprocessor import TextPreprocessor
 from src.normalizer import DataNormalizer
 from src.vectorizer import TextVectorizer
-from src.model_trainer import ModelTrainer  # <--- Import this
+from src.model_trainer import ModelTrainer
+from src.evaluator import ModelEvaluator  # <--- Import Evaluator
 import scipy.sparse
 import pandas as pd
 
@@ -38,23 +39,38 @@ def main():
     X_train_final = scipy.sparse.hstack([tfidf_train, scipy.sparse.csr_matrix(X_train_scaled[numeric_features].values)])
     X_test_final = scipy.sparse.hstack([tfidf_test, scipy.sparse.csr_matrix(X_test_scaled[numeric_features].values)])
 
-    # 6. Train and Evaluate Models
-    print("\n>>> 6. Training Models")
+    # 6. Train and Evaluate
+    print("\n>>> 6. Training & Visualization")
     trainer = ModelTrainer()
+    evaluator = ModelEvaluator()  # Initialize Evaluator
 
-    # Train Naive Bayes
-    trainer.train_naive_bayes(X_train_final, y_train_enc)
-    trainer.evaluate_model('NaiveBayes', X_test_final, y_test_enc)
+    results = {}
 
-    # Train Logistic Regression
-    trainer.train_logistic_regression(X_train_final, y_train_enc)
-    trainer.evaluate_model('LogisticRegression', X_test_final, y_test_enc)
+    # --- Naive Bayes ---
+    nb_model = trainer.train_naive_bayes(X_train_final, y_train_enc)
+    acc_nb = trainer.evaluate_model('NaiveBayes', X_test_final, y_test_enc)
+    results['NaiveBayes'] = acc_nb
+    evaluator.plot_confusion_matrix(nb_model, X_test_final, y_test_enc, 'NaiveBayes')
+    evaluator.plot_roc_curve(nb_model, X_test_final, y_test_enc, 'NaiveBayes')
 
-    # Train Random Forest
-    trainer.train_random_forest(X_train_final, y_train_enc)
-    trainer.evaluate_model('RandomForest', X_test_final, y_test_enc)
+    # --- Logistic Regression ---
+    lr_model = trainer.train_logistic_regression(X_train_final, y_train_enc)
+    acc_lr = trainer.evaluate_model('LogisticRegression', X_test_final, y_test_enc)
+    results['LogisticRegression'] = acc_lr
+    evaluator.plot_confusion_matrix(lr_model, X_test_final, y_test_enc, 'LogisticRegression')
+    evaluator.plot_roc_curve(lr_model, X_test_final, y_test_enc, 'LogisticRegression')
 
-    print("\nTraining complete!")
+    # --- Random Forest ---
+    rf_model = trainer.train_random_forest(X_train_final, y_train_enc)
+    acc_rf = trainer.evaluate_model('RandomForest', X_test_final, y_test_enc)
+    results['RandomForest'] = acc_rf
+    evaluator.plot_confusion_matrix(rf_model, X_test_final, y_test_enc, 'RandomForest')
+    evaluator.plot_roc_curve(rf_model, X_test_final, y_test_enc, 'RandomForest')
+
+    # --- Comparison ---
+    evaluator.plot_model_comparison(results)
+
+    print(f"\nTraining complete! Check the 'results/' folder for plots.")
 
 
 if __name__ == "__main__":
