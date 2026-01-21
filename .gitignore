@@ -1,0 +1,33 @@
+# Virtual environment
+.venv/
+venv/
+env/
+
+# IDE settings
+.idea/
+*.iml
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pytest
+.pytest_cache/
+
+# Data files (don't commit large datasets)
+data/raw/*.csv
+data/processed/*.pkl
+
+# Models (large files)
+models/*.pkl
+models/*.joblib
+
+# OS
+.DS_Store
+Thumbs.db
