@@ -2,8 +2,10 @@ from src.data_loader import DataLoader
 from src.preprocessor import TextPreprocessor
 from src.normalizer import DataNormalizer
 from src.vectorizer import TextVectorizer
+from src.model_trainer import ModelTrainer  # <--- Import this
 import scipy.sparse
 import pandas as pd
+
 
 def main():
     # 1. Load Data
@@ -19,38 +21,40 @@ def main():
     # 3. Split and Normalize Data
     print("\n>>> 3. Splitting and Normalizing")
     normalizer = DataNormalizer()
-
-    # Split into Train/Test
     X_train, X_test, y_train, y_test = normalizer.split_data(df_processed)
-
-    # Encode Labels (ham=0, spam=1)
     y_train_enc, y_test_enc = normalizer.encode_labels(y_train, y_test)
-    print(f"Train set shape: {X_train.shape}")
-    print(f"Test set shape: {X_test.shape}")
 
-    # Scale numerical features
     numeric_features = ['message_len', 'punct_count', 'caps_count']
-    X_train, X_test = normalizer.scale_features(X_train, X_test, numeric_features)
+    X_train_scaled, X_test_scaled = normalizer.scale_features(X_train, X_test, numeric_features)
 
     # 4. Vectorize Text
     print("\n>>> 4. Vectorizing Text")
     vectorizer = TextVectorizer(max_features=3000)
-
-    # Create TF-IDF matrices
     tfidf_train = vectorizer.fit_transform(X_train['processed_text'])
     tfidf_test = vectorizer.transform(X_test['processed_text'])
 
-    print(f"TF-IDF Matrix shape: {tfidf_train.shape}")
+    # 5. Combine Features
+    print("\n>>> 5. Combining Features")
+    X_train_final = scipy.sparse.hstack([tfidf_train, scipy.sparse.csr_matrix(X_train_scaled[numeric_features].values)])
+    X_test_final = scipy.sparse.hstack([tfidf_test, scipy.sparse.csr_matrix(X_test_scaled[numeric_features].values)])
 
-    # 5. Combine Features (Numerical + TF-IDF)
-    # We combine the sparse TF-IDF matrix with our scaled numerical features
-    from scipy.sparse import hstack
+    # 6. Train and Evaluate Models
+    print("\n>>> 6. Training Models")
+    trainer = ModelTrainer()
 
-    X_train_final = hstack([tfidf_train, scipy.sparse.csr_matrix(X_train[numeric_features].values)])
-    X_test_final = hstack([tfidf_test, scipy.sparse.csr_matrix(X_test[numeric_features].values)])
+    # Train Naive Bayes
+    trainer.train_naive_bayes(X_train_final, y_train_enc)
+    trainer.evaluate_model('NaiveBayes', X_test_final, y_test_enc)
 
-    print(f"Final Training Data Shape: {X_train_final.shape}")
-    print("\nData preparation complete! Ready for training.")
+    # Train Logistic Regression
+    trainer.train_logistic_regression(X_train_final, y_train_enc)
+    trainer.evaluate_model('LogisticRegression', X_test_final, y_test_enc)
+
+    # Train Random Forest
+    trainer.train_random_forest(X_train_final, y_train_enc)
+    trainer.evaluate_model('RandomForest', X_test_final, y_test_enc)
+
+    print("\nTraining complete!")
 
 
 if __name__ == "__main__":
